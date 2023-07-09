@@ -30,7 +30,12 @@ const OrderDelivery = () => {
             />
             <Text style={{ fontSize: 25, letterSpacing: 1 }}>5 km</Text>
           </View>
-
+          <View
+            style={{
+              borderTopWidth: 2,
+              borderColor: "gray",
+            }}
+          />
           <View style={{ paddingHorizontal: 20 }}>
             <Text
               style={{ fontSize: 25, letterSpacing: 1, paddingVertical: 20 }}
