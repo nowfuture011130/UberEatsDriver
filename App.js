@@ -1,11 +1,12 @@
 import { StatusBar } from "expo-status-bar";
 import { StyleSheet, View, FlatList } from "react-native";
 import OrderScreen from "./src/screens/OrderScreen";
+import OrderDelivery from "./src/screens/OrderDelivery";
 
 export default function App() {
   return (
     <View style={styles.container}>
-      <OrderScreen />
+      <OrderDelivery />
       <StatusBar style="auto" />
     </View>
   );
