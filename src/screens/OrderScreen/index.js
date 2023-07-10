@@ -21,7 +21,6 @@ const OrderScreen = () => {
   let onDrag = false;
   const animateToRegion = (pos) => {
     if (!onDrag) {
-      console.log(pos);
       const region = {
         latitude: pos.latitude, // target latitude
         longitude: pos.longitude, // target longitude
