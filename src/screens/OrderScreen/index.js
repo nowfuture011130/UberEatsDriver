@@ -8,12 +8,14 @@ import {
 import { useEffect, useState } from "react";
 import BottomSheet, { BottomSheetFlatList } from "@gorhom/bottom-sheet";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
-import orders from "../../../assets/data/orders.json";
 import OrderItem from "../../components/OrderItme";
 import MapView, { Marker } from "react-native-maps";
 import { Entypo } from "@expo/vector-icons";
+import { DataStore } from "@aws-amplify/datastore";
+import { Order, Restaurant, User2 } from "../../models";
 
 const OrderScreen = () => {
+  const [orders, setOrders] = useState([]);
   const bottomSheetRef = useRef(null);
   const mapRef = useRef(null);
   const { width, height } = useWindowDimensions();
@@ -31,6 +33,25 @@ const OrderScreen = () => {
       onDrag = true;
     }
   };
+
+  useEffect(() => {
+    DataStore.query(Order, (o) => o.status.eq("READY_FOR_PICKUP")).then(
+      async (orders) => {
+        const neworders = await Promise.all(
+          orders.map(async (order) => {
+            const restaurant = await DataStore.query(
+              Restaurant,
+              order.orderRestaurantId
+            );
+            const user = await DataStore.query(User2, order.user2ID);
+            const newOrder = { ...order, Restaurant: restaurant, User: user };
+            return newOrder;
+          })
+        );
+        setOrders(neworders);
+      }
+    );
+  }, []);
 
   useEffect(() => {
     const getPermissions = async () => {

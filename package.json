@@ -9,6 +9,7 @@
     "web": "expo start --web"
   },
   "dependencies": {
+    "@azure/core-asynciterator-polyfill": "^1.0.2",
     "@gorhom/bottom-sheet": "^4",
     "@react-native-async-storage/async-storage": "^1.19.0",
     "@react-native-community/cli-platform-android": "^6.0.0",
