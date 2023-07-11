@@ -5,14 +5,16 @@ import { Amplify } from "aws-amplify";
 import { withAuthenticator } from "aws-amplify-react-native";
 import awsExports from "./src/aws-exports";
 import AuthContext from "./src/contexts/AuthContext";
-
+import OrderContextProvider from "./src/contexts/OrderContext";
 Amplify.configure({ ...awsExports, Analytics: { disabled: true } });
 
 function App() {
   return (
     <NavigationContainer>
       <AuthContext>
-        <Navigation />
+        <OrderContextProvider>
+          <Navigation />
+        </OrderContextProvider>
       </AuthContext>
 
       <StatusBar style="auto" />

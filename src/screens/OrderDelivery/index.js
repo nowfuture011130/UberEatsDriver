@@ -7,7 +7,7 @@ import {
   ActivityIndicator,
   Pressable,
 } from "react-native";
-import BottomSheet from "@gorhom/bottom-sheet";
+import BottomSheet, { BottomSheetFlatList } from "@gorhom/bottom-sheet";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import {
   FontAwesome5,
@@ -19,23 +19,15 @@ import {
 import MapView, { Marker } from "react-native-maps";
 import * as Location from "expo-location";
 import MapViewDirections from "react-native-maps-directions";
-import { useNavigation } from "@react-navigation/native";
-import orders from "../../../assets/data/orders.json";
-
-const order = orders[0];
+import { useNavigation, useRoute } from "@react-navigation/native";
+import { DataStore } from "@aws-amplify/datastore";
+import { OrderDish, Dish } from "../../models";
+import { useOrderContext } from "../../contexts/OrderContext";
 
 const ORDER_STATUSES = {
   READY_FOR_PICK_UP: "READY_FOR_PICK_UP",
   ACCEPTED: "ACCEPTED",
   PICKED_UP: "PICKED_UP",
-};
-let restaurantLocation = {
-  latitude: order.Restaurant.lat,
-  longitude: order.Restaurant.lng,
-};
-let orderLocation = {
-  latitude: order.User.lat,
-  longitude: order.User.lng,
 };
 
 const OrderDelivery = () => {
@@ -43,7 +35,7 @@ const OrderDelivery = () => {
   const mapRef = useRef(null);
   const { width, height } = useWindowDimensions();
   const snapPoints = useMemo(() => ["13%", "95%"], []);
-  let onDrag = false;
+  const { acceptOrder } = useOrderContext();
   const [driverLocation, setDriverLocation] = useState(null);
   const [totalMin, setTotalMin] = useState(0);
   const [totalKm, setTotalKm] = useState(0);
@@ -51,8 +43,25 @@ const OrderDelivery = () => {
     ORDER_STATUSES.READY_FOR_PICK_UP
   );
   const [isDriverClose, setIsDriverClose] = useState(false);
-
   const navigation = useNavigation();
+  const route = useRoute();
+  const order = route.params.order;
+  const [dishes, setDishes] = useState([]);
+
+  useEffect(() => {
+    DataStore.query(OrderDish, (od) => od.orderID.eq(order.id)).then(
+      async (orderdishes) => {
+        const neworders = await Promise.all(
+          orderdishes.map(async (orderdish) => {
+            const dish = await DataStore.query(Dish, orderdish.orderDishDishId);
+            return { ...dish, quantity: orderdish.quantity };
+          })
+        );
+        setDishes(neworders);
+        console.log(neworders);
+      }
+    );
+  }, []);
 
   useEffect(() => {
     (async () => {
@@ -99,7 +108,16 @@ const OrderDelivery = () => {
   //   }
   // };
 
-  if (!driverLocation) {
+  let restaurantLocation = {
+    latitude: order?.Restaurant?.lat,
+    longitude: order?.Restaurant?.lng,
+  };
+  let orderLocation = {
+    latitude: order?.User?.lat,
+    longitude: order?.User?.lng,
+  };
+
+  if (!driverLocation || dishes?.length == 0) {
     return <ActivityIndicator size={"large"} />;
   }
 
@@ -113,6 +131,7 @@ const OrderDelivery = () => {
         longitudeDelta: 0.01,
       });
       setDeliveryStatus(ORDER_STATUSES.ACCEPTED);
+      acceptOrder(order);
     }
     if (deliveryStatus == ORDER_STATUSES.ACCEPTED) {
       bottomSheetRef.current.collapse();
@@ -277,9 +296,19 @@ const OrderDelivery = () => {
                 paddingTop: 20,
               }}
             >
-              <Text style={styles.item}>Onion Rings x1</Text>
-              <Text style={styles.item}>Big Mac x3</Text>
-              <Text style={styles.item}>Coca-Cola x1</Text>
+              {dishes.map((item) => (
+                <Text style={styles.item} key={item.id}>
+                  {item.name} x{item.quantity}
+                </Text>
+              ))}
+              {/* <BottomSheetFlatList
+                data={dishes}
+                renderItem={({ item }) => (
+                  <Text style={styles.item}>
+                    {item.name} x{item.quantity}
+                  </Text>
+                )}
+              /> */}
             </View>
           </View>
           <Pressable

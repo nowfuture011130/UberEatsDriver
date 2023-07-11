@@ -7,7 +7,7 @@ const OrderItem = ({ order }) => {
   return (
     <Pressable
       style={styles.greenBorder}
-      onPress={() => navigation.navigate("OrderDelivery", { id: order.id })}
+      onPress={() => navigation.navigate("OrderDelivery", { order: order })}
     >
       <Image source={{ uri: order.Restaurant.image }} style={styles.image} />
       <View style={{ marginLeft: 10, flex: 1, paddingVertical: 5 }}>
