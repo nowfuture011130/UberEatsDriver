@@ -35,7 +35,7 @@ const OrderDelivery = () => {
   const mapRef = useRef(null);
   const { width, height } = useWindowDimensions();
   const snapPoints = useMemo(() => ["13%", "95%"], []);
-  const { acceptOrder } = useOrderContext();
+  const { acceptOrder, fetchOrder, order } = useOrderContext();
   const [driverLocation, setDriverLocation] = useState(null);
   const [totalMin, setTotalMin] = useState(0);
   const [totalKm, setTotalKm] = useState(0);
@@ -45,23 +45,11 @@ const OrderDelivery = () => {
   const [isDriverClose, setIsDriverClose] = useState(false);
   const navigation = useNavigation();
   const route = useRoute();
-  const order = route.params.order;
-  const [dishes, setDishes] = useState([]);
+  const orders = route.params.order;
 
   useEffect(() => {
-    DataStore.query(OrderDish, (od) => od.orderID.eq(order.id)).then(
-      async (orderdishes) => {
-        const neworders = await Promise.all(
-          orderdishes.map(async (orderdish) => {
-            const dish = await DataStore.query(Dish, orderdish.orderDishDishId);
-            return { ...dish, quantity: orderdish.quantity };
-          })
-        );
-        setDishes(neworders);
-        console.log(neworders);
-      }
-    );
-  }, []);
+    fetchOrder(orders);
+  }, [order]);
 
   useEffect(() => {
     (async () => {
@@ -117,7 +105,7 @@ const OrderDelivery = () => {
     longitude: order?.User?.lng,
   };
 
-  if (!driverLocation || dishes?.length == 0) {
+  if (!driverLocation || !order) {
     return <ActivityIndicator size={"large"} />;
   }
 
@@ -296,13 +284,13 @@ const OrderDelivery = () => {
                 paddingTop: 20,
               }}
             >
-              {dishes.map((item) => (
+              {order?.dishes.map((item) => (
                 <Text style={styles.item} key={item.id}>
                   {item.name} x{item.quantity}
                 </Text>
               ))}
               {/* <BottomSheetFlatList
-                data={dishes}
+                data={order.dishes}
                 renderItem={({ item }) => (
                   <Text style={styles.item}>
                     {item.name} x{item.quantity}
