@@ -11,6 +11,30 @@ const OrderContext = createContext({});
 const OrderContextProvider = ({ children }) => {
   const { dbDriver } = useAuthContext();
   const [order, setOrder] = useState(null);
+  const [refresh, setRefresh] = useState(false);
+
+  const completeOrder = async () => {
+    const oldOrder = await DataStore.query(Order, order.id);
+    DataStore.save(
+      Order.copyOf(oldOrder, (updated) => {
+        updated.status = "COMPLETED";
+      })
+    );
+    const neworder = { ...order, status: "COMPLETED" };
+    setOrder(neworder);
+  };
+
+  const pickUpOrder = async () => {
+    const oldOrder = await DataStore.query(Order, order.id);
+    DataStore.save(
+      Order.copyOf(oldOrder, (updated) => {
+        updated.status = "PICKED_UP";
+      })
+    );
+    const neworder = { ...order, status: "PICKED_UP" };
+    setOrder(neworder);
+  };
+
   const fetchOrder = async (order) => {
     if (!order) {
       setOrder(null);
@@ -30,18 +54,30 @@ const OrderContextProvider = ({ children }) => {
     );
   };
 
-  const acceptOrder = async (order) => {
+  const acceptOrder = async () => {
     const oldOrder = await DataStore.query(Order, order.id);
     DataStore.save(
       Order.copyOf(oldOrder, (updated) => {
         updated.status = "ACCEPTED";
         updated.driverID = dbDriver.id;
       })
-    ).then(setOrder);
+    );
+    const neworder = { ...order, status: "ACCEPTED", driverID: dbDriver.id };
+    setOrder(neworder);
   };
 
   return (
-    <OrderContext.Provider value={{ acceptOrder, fetchOrder, order }}>
+    <OrderContext.Provider
+      value={{
+        acceptOrder,
+        fetchOrder,
+        order,
+        pickUpOrder,
+        completeOrder,
+        refresh,
+        setRefresh,
+      }}
+    >
       {children}
     </OrderContext.Provider>
   );

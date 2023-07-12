@@ -21,27 +21,26 @@ import * as Location from "expo-location";
 import MapViewDirections from "react-native-maps-directions";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import { DataStore } from "@aws-amplify/datastore";
-import { OrderDish, Dish } from "../../models";
 import { useOrderContext } from "../../contexts/OrderContext";
-
-const ORDER_STATUSES = {
-  READY_FOR_PICK_UP: "READY_FOR_PICK_UP",
-  ACCEPTED: "ACCEPTED",
-  PICKED_UP: "PICKED_UP",
-};
 
 const OrderDelivery = () => {
   const bottomSheetRef = useRef(null);
   const mapRef = useRef(null);
   const { width, height } = useWindowDimensions();
   const snapPoints = useMemo(() => ["13%", "95%"], []);
-  const { acceptOrder, fetchOrder, order } = useOrderContext();
+  const {
+    acceptOrder,
+    fetchOrder,
+    order,
+    pickUpOrder,
+    completeOrder,
+    setRefresh,
+    refresh,
+  } = useOrderContext();
   const [driverLocation, setDriverLocation] = useState(null);
   const [totalMin, setTotalMin] = useState(0);
   const [totalKm, setTotalKm] = useState(0);
-  const [deliveryStatus, setDeliveryStatus] = useState(
-    ORDER_STATUSES.READY_FOR_PICK_UP
-  );
+
   const [isDriverClose, setIsDriverClose] = useState(false);
   const navigation = useNavigation();
   const route = useRoute();
@@ -49,7 +48,7 @@ const OrderDelivery = () => {
 
   useEffect(() => {
     fetchOrder(orders);
-  }, [order]);
+  }, [orders]);
 
   useEffect(() => {
     (async () => {
@@ -109,8 +108,8 @@ const OrderDelivery = () => {
     return <ActivityIndicator size={"large"} />;
   }
 
-  const onButtonPress = () => {
-    if (deliveryStatus === ORDER_STATUSES.READY_FOR_PICK_UP) {
+  const onButtonPress = async () => {
+    if (order.status === "READY_FOR_PICKUP") {
       bottomSheetRef.current.collapse();
       mapRef.current.animateToRegion({
         latitude: driverLocation.latitude,
@@ -118,40 +117,40 @@ const OrderDelivery = () => {
         latitudeDelta: 0.01,
         longitudeDelta: 0.01,
       });
-      setDeliveryStatus(ORDER_STATUSES.ACCEPTED);
-      acceptOrder(order);
+      await acceptOrder();
     }
-    if (deliveryStatus == ORDER_STATUSES.ACCEPTED) {
+    if (order.status == "ACCEPTED") {
       bottomSheetRef.current.collapse();
-      setDeliveryStatus(ORDER_STATUSES.PICKED_UP);
+      await pickUpOrder();
     }
-    if (deliveryStatus == ORDER_STATUSES.PICKED_UP) {
+    if (order.status == "PICKED_UP") {
+      await completeOrder();
+      setRefresh(!refresh);
       bottomSheetRef.current.collapse();
       navigation.goBack();
-      console.log("complete");
     }
   };
 
   const renderButtonTitle = () => {
-    if (deliveryStatus === ORDER_STATUSES.READY_FOR_PICK_UP) {
+    if (order.status === "READY_FOR_PICKUP") {
       return "Accept Order";
     }
-    if (deliveryStatus === ORDER_STATUSES.ACCEPTED) {
+    if (order.status === "ACCEPTED") {
       return "Pick Up Order";
     }
-    if (deliveryStatus === ORDER_STATUSES.PICKED_UP) {
+    if (order.status === "PICKED_UP") {
       return "Complete Delivery";
     }
   };
 
   const isButtonDisable = () => {
-    if (deliveryStatus == ORDER_STATUSES.READY_FOR_PICK_UP) {
+    if (order.status === "READY_FOR_PICKUP") {
       return false;
     }
-    if (deliveryStatus == ORDER_STATUSES.ACCEPTED && isDriverClose) {
+    if (order.status === "ACCEPTED" && isDriverClose) {
       return false;
     }
-    if (deliveryStatus == ORDER_STATUSES.PICKED_UP && isDriverClose) {
+    if (order.status === "PICKED_UP" && isDriverClose) {
       return false;
     }
     return true;
@@ -181,20 +180,16 @@ const OrderDelivery = () => {
           <MapViewDirections
             origin={driverLocation}
             destination={
-              deliveryStatus === ORDER_STATUSES.ACCEPTED
-                ? restaurantLocation
-                : orderLocation
+              order.status === "ACCEPTED" ? restaurantLocation : orderLocation
             }
             waypoints={
-              deliveryStatus === ORDER_STATUSES.READY_FOR_PICK_UP
-                ? [restaurantLocation]
-                : []
+              order.status === "READY_FOR_PICKUP" ? [restaurantLocation] : []
             }
             strokeWidth={3}
             strokeColor="black"
             apikey={"AIzaSyD0g5cZwzDSDdWGZ7qdU1pxooPTgUriE3M"}
             onReady={(result) => {
-              if (result.distance < 99999) {
+              if (result.distance < 0.1) {
                 setIsDriverClose(true);
               } else {
                 setIsDriverClose(false);
@@ -228,7 +223,7 @@ const OrderDelivery = () => {
             </View>
           </Marker>
         </MapView>
-        {deliveryStatus === ORDER_STATUSES.READY_FOR_PICK_UP && (
+        {order.status === "READY_FOR_PICKUP" && (
           <Ionicons
             onPress={() => navigation.goBack()}
             name="arrow-back-circle"
@@ -307,7 +302,21 @@ const OrderDelivery = () => {
             onPress={onButtonPress}
             disabled={isButtonDisable()}
           >
-            <Text style={styles.buttonText}>{renderButtonTitle()}</Text>
+            {isButtonDisable() ? (
+              <Text style={styles.buttonTooFarText}>
+                Too far from the destination
+              </Text>
+            ) : (
+              <></>
+            )}
+            <Text
+              style={{
+                ...styles.buttonText,
+                paddingTop: isButtonDisable() ? 0 : 15,
+              }}
+            >
+              {renderButtonTitle()}
+            </Text>
           </Pressable>
         </BottomSheet>
       </GestureHandlerRootView>
@@ -350,9 +359,17 @@ const styles = StyleSheet.create({
     marginVertical: 30,
     borderRadius: 10,
   },
+  buttonTooFarText: {
+    color: "white",
+    paddingTop: 15,
+    fontSize: 17,
+    fontWeight: "300",
+    textAlign: "center",
+    letterSpacing: 0.5,
+  },
   buttonText: {
     color: "white",
-    paddingVertical: 15,
+    paddingBottom: 15,
     fontSize: 25,
     fontWeight: "500",
     textAlign: "center",

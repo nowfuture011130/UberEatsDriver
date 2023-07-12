@@ -4,6 +4,7 @@ import {
   Text,
   useWindowDimensions,
   PermissionsAndroid,
+  Button,
 } from "react-native";
 import { useEffect, useState } from "react";
 import BottomSheet, { BottomSheetFlatList } from "@gorhom/bottom-sheet";
@@ -13,8 +14,10 @@ import MapView, { Marker } from "react-native-maps";
 import { Entypo } from "@expo/vector-icons";
 import { DataStore } from "@aws-amplify/datastore";
 import { Order, Restaurant, User2 } from "../../models";
+import { useOrderContext } from "../../contexts/OrderContext";
 
 const OrderScreen = () => {
+  const { refresh, setRefresh } = useOrderContext();
   const [orders, setOrders] = useState([]);
   const bottomSheetRef = useRef(null);
   const mapRef = useRef(null);
@@ -51,7 +54,7 @@ const OrderScreen = () => {
         setOrders(neworders);
       }
     );
-  }, []);
+  }, [refresh]);
 
   useEffect(() => {
     const getPermissions = async () => {
@@ -104,6 +107,20 @@ const OrderScreen = () => {
             </Marker>
           ))}
         </MapView>
+        <View
+          style={{
+            position: "absolute", //use absolute position to show button on top of the map
+            top: "6%", //for center align
+            alignSelf: "flex-start", //for align to right
+          }}
+        >
+          <Button
+            title="refresh"
+            onPress={() => {
+              setRefresh(!refresh);
+            }}
+          />
+        </View>
         <BottomSheet ref={bottomSheetRef} snapPoints={snapPoints}>
           <View style={{ alignItems: "center", marginBottom: 30 }}>
             <Text
