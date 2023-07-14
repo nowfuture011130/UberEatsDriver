@@ -11,11 +11,16 @@ import MapView from "react-native-maps";
 import * as Location from "expo-location";
 import MapViewDirections from "react-native-maps-directions";
 import { useNavigation, useRoute } from "@react-navigation/native";
+import uuid from "react-native-uuid";
 import { useOrderContext } from "../../contexts/OrderContext";
 import BottomSheetDetails from "./bottomSheetDetails";
 import CustomMarker from "../../components/CustomMarker";
+import { DataStore } from "@aws-amplify/datastore";
+import { Driver } from "../../models";
+import { useAuthContext } from "../../contexts/AuthContext";
 const OrderDelivery = () => {
   const { fetchOrder, order } = useOrderContext();
+  const { dbDriver } = useAuthContext();
   const mapRef = useRef(null);
   const { width, height } = useWindowDimensions();
   const [driverLocation, setDriverLocation] = useState(null);
@@ -28,6 +33,17 @@ const OrderDelivery = () => {
   useEffect(() => {
     fetchOrder(orders);
   }, [orders]);
+
+  useEffect(() => {
+    if (driverLocation) {
+      DataStore.save(
+        Driver.copyOf(dbDriver, (updated) => {
+          updated.lat = driverLocation.latitude;
+          updated.lng = driverLocation.longitude;
+        })
+      );
+    }
+  }, [driverLocation]);
 
   useEffect(() => {
     (async () => {
@@ -108,8 +124,8 @@ const OrderDelivery = () => {
               setTotalKm(result.distance);
             }}
           />
-          <CustomMarker data={order.Restaurant} type="shop" />
-          <CustomMarker data={order.User} type="restaurant" />
+          <CustomMarker data={order.Restaurant} type="shop" key={uuid.v4()} />
+          <CustomMarker data={order.User} type="restaurant" key={uuid.v4()} />
         </MapView>
         <BottomSheetDetails
           totalKm={totalKm}

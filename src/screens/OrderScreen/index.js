@@ -5,38 +5,44 @@ import {
   useWindowDimensions,
   PermissionsAndroid,
   Button,
+  ActivityIndicator,
 } from "react-native";
 import { useEffect, useState } from "react";
 import BottomSheet, { BottomSheetFlatList } from "@gorhom/bottom-sheet";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import OrderItem from "../../components/OrderItme";
+import * as Location from "expo-location";
 import MapView from "react-native-maps";
-import { Entypo } from "@expo/vector-icons";
 import { DataStore } from "@aws-amplify/datastore";
 import { Order, Restaurant, User2 } from "../../models";
 import { useOrderContext } from "../../contexts/OrderContext";
+import uuid from "react-native-uuid";
 import CustomMarker from "../../components/CustomMarker";
 
 const OrderScreen = () => {
   const { refresh, setRefresh } = useOrderContext();
   const [orders, setOrders] = useState([]);
+  const [driverLocation, setDriverLocation] = useState(null);
   const bottomSheetRef = useRef(null);
   const mapRef = useRef(null);
   const { width, height } = useWindowDimensions();
   const snapPoints = useMemo(() => ["13%", "95%"], []);
-  let onDrag = false;
-  const animateToRegion = (pos) => {
-    if (!onDrag) {
-      const region = {
-        latitude: pos.latitude, // target latitude
-        longitude: pos.longitude, // target longitude
-        latitudeDelta: 0.0922,
-        longitudeDelta: 0.0421,
-      };
-      mapRef.current.animateToRegion(region, 1000);
-      onDrag = true;
-    }
-  };
+
+  useEffect(() => {
+    (async () => {
+      let { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== "granted") {
+        console.log("unallowed");
+        return;
+      } else {
+        let location = await Location.getCurrentPositionAsync();
+        setDriverLocation({
+          latitude: location.coords.latitude,
+          longitude: location.coords.longitude,
+        });
+      }
+    })();
+  }, []);
 
   useEffect(() => {
     DataStore.query(Order, (o) => o.status.eq("READY_FOR_PICKUP")).then(
@@ -71,6 +77,10 @@ const OrderScreen = () => {
     getPermissions();
   }, []);
 
+  if (!driverLocation) {
+    return <ActivityIndicator size={"large"} />;
+  }
+
   return (
     <View style={{ flex: 1, backgroundColor: "lightblue" }}>
       <GestureHandlerRootView style={{ flex: 1 }}>
@@ -82,12 +92,15 @@ const OrderScreen = () => {
           ref={mapRef}
           showsUserLocation
           followsUserLocation
-          onUserLocationChange={(event) =>
-            animateToRegion(event.nativeEvent.coordinate)
-          }
+          initialRegion={{
+            latitude: driverLocation.latitude,
+            longitude: driverLocation.longitude,
+            latitudeDelta: 0.07,
+            longitudeDelta: 0.07,
+          }}
         >
           {orders.map((order) => (
-            <CustomMarker data={order.Restaurant} type="shop" />
+            <CustomMarker data={order.Restaurant} type="shop" key={uuid.v4()} />
           ))}
         </MapView>
         <View
@@ -123,6 +136,7 @@ const OrderScreen = () => {
           <BottomSheetFlatList
             data={orders}
             renderItem={({ item }) => <OrderItem order={item} />}
+            key={uuid.v4()}
           />
         </BottomSheet>
       </GestureHandlerRootView>

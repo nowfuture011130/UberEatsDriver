@@ -13,6 +13,19 @@ const OrderContextProvider = ({ children }) => {
   const [order, setOrder] = useState(null);
   const [refresh, setRefresh] = useState(false);
 
+  // useEffect(() => {
+  //   if (!order) {
+  //     return;
+  //   }
+  //   DataStore.observe(Order, order.id).subscribe(
+  //     async ({ opType, element }) => {
+  //       if (opType === "UPDATE") {
+  //         await completeOrder();
+  //       }
+  //     }
+  //   );
+  // }, [order]);
+
   const completeOrder = async () => {
     const oldOrder = await DataStore.query(Order, order.id);
     const updated = await DataStore.save(

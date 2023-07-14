@@ -9,13 +9,29 @@ const Context = createContext({});
 const AuthContext = ({ children }) => {
   const [authUser, setAuthUser] = useState(null);
   const [dbDriver, setDbDriver] = useState(null);
+  const [loading, setLoading] = useState(true);
   const sub = authUser?.attributes?.sub;
 
   const getUser = async (sub) => {
     const models = await DataStore.query(Driver, (a) => a.sub.eq(sub));
-    console.log("all users is" + models);
-    if (models) setDbDriver(models[0]);
+    setDbDriver(models[0]);
+    setLoading(false);
   };
+
+  useEffect(() => {
+    if (!dbDriver) {
+      return;
+    }
+    const subscription = DataStore.observe(Driver, dbDriver.id).subscribe(
+      (msg) => {
+        if (msg.opType === "UPDATE") {
+          setDbDriver(msg.element);
+        }
+      }
+    );
+
+    return () => subscription.unsubscribe();
+  }, [dbDriver]);
 
   useEffect(() => {
     Auth.currentAuthenticatedUser({ bypassCache: true }).then(setAuthUser);
@@ -32,7 +48,7 @@ const AuthContext = ({ children }) => {
   }, [sub]);
 
   return (
-    <Context.Provider value={{ authUser, dbDriver, sub, setDbDriver }}>
+    <Context.Provider value={{ authUser, dbDriver, sub, setDbDriver, loading }}>
       {children}
     </Context.Provider>
   );
