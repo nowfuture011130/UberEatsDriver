@@ -4,6 +4,7 @@ import { Entypo, MaterialIcons } from "@expo/vector-icons";
 const CustomMarker = ({ data, type }) => {
   return (
     <Marker
+      key={data.id}
       coordinate={{
         latitude: data.lat,
         longitude: data.lng,

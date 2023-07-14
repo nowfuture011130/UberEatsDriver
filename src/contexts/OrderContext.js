@@ -15,7 +15,7 @@ const OrderContextProvider = ({ children }) => {
 
   const completeOrder = async () => {
     const oldOrder = await DataStore.query(Order, order.id);
-    DataStore.save(
+    const updated = await DataStore.save(
       Order.copyOf(oldOrder, (updated) => {
         updated.status = "COMPLETED";
       })

@@ -6,14 +6,14 @@ import {
   ActivityIndicator,
 } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
-import { Entypo, MaterialIcons, Ionicons } from "@expo/vector-icons";
+import { Ionicons } from "@expo/vector-icons";
 import MapView from "react-native-maps";
 import * as Location from "expo-location";
 import MapViewDirections from "react-native-maps-directions";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import { useOrderContext } from "../../contexts/OrderContext";
 import BottomSheetDetails from "./bottomSheetDetails";
-import CustomMarker from "./cunstomMarker";
+import CustomMarker from "../../components/CustomMarker";
 const OrderDelivery = () => {
   const { fetchOrder, order } = useOrderContext();
   const mapRef = useRef(null);
@@ -91,9 +91,6 @@ const OrderDelivery = () => {
             latitudeDelta: 0.07,
             longitudeDelta: 0.07,
           }}
-          // onUserLocationChange={(event) =>
-          //   animateToRegion(event.nativeEvent.coordinate)
-          // }
         >
           <MapViewDirections
             origin={driverLocation}

@@ -10,11 +10,12 @@ import { useEffect, useState } from "react";
 import BottomSheet, { BottomSheetFlatList } from "@gorhom/bottom-sheet";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import OrderItem from "../../components/OrderItme";
-import MapView, { Marker } from "react-native-maps";
+import MapView from "react-native-maps";
 import { Entypo } from "@expo/vector-icons";
 import { DataStore } from "@aws-amplify/datastore";
 import { Order, Restaurant, User2 } from "../../models";
 import { useOrderContext } from "../../contexts/OrderContext";
+import CustomMarker from "../../components/CustomMarker";
 
 const OrderScreen = () => {
   const { refresh, setRefresh } = useOrderContext();
@@ -86,25 +87,7 @@ const OrderScreen = () => {
           }
         >
           {orders.map((order) => (
-            <Marker
-              key={order.id}
-              title={order.Restaurant.name}
-              description={order.Restaurant.address}
-              coordinate={{
-                latitude: order.Restaurant.lat,
-                longitude: order.Restaurant.lng,
-              }}
-            >
-              <View
-                style={{
-                  backgroundColor: "dodgerblue",
-                  padding: 5,
-                  borderRadius: 20,
-                }}
-              >
-                <Entypo name="shop" size={25} color="white" />
-              </View>
-            </Marker>
+            <CustomMarker data={order.Restaurant} type="shop" />
           ))}
         </MapView>
         <View

@@ -5,6 +5,12 @@ import { FontAwesome5, Fontisto } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
 import { useOrderContext } from "../../contexts/OrderContext";
 
+const STATUS_TO_TITLE = {
+  READY_FOR_PICKUP: "Accept Order",
+  ACCEPTED: "Pick Up Order",
+  PICKED_UP: "Complete Delivery",
+};
+
 const BottomSheetDetails = (props) => {
   const { totalKm, totalMin, mapRef, driverLocation } = props;
   const isDriverClose = totalKm < 99999;
@@ -43,26 +49,14 @@ const BottomSheetDetails = (props) => {
     }
   };
 
-  const renderButtonTitle = () => {
-    if (order.status === "READY_FOR_PICKUP") {
-      return "Accept Order";
-    }
-    if (order.status === "ACCEPTED") {
-      return "Pick Up Order";
-    }
-    if (order.status === "PICKED_UP") {
-      return "Complete Delivery";
-    }
-  };
-
   const isButtonDisable = () => {
     if (order.status === "READY_FOR_PICKUP") {
       return false;
     }
-    if (order.status === "ACCEPTED" && isDriverClose) {
-      return false;
-    }
-    if (order.status === "PICKED_UP" && isDriverClose) {
+    if (
+      (order.status === "ACCEPTED" || order.status === "PICKED_UP") &&
+      isDriverClose
+    ) {
       return false;
     }
     return true;
@@ -149,7 +143,7 @@ const BottomSheetDetails = (props) => {
             paddingTop: isButtonDisable() ? 0 : 15,
           }}
         >
-          {renderButtonTitle()}
+          {STATUS_TO_TITLE[order.status]}
         </Text>
       </Pressable>
     </BottomSheet>
