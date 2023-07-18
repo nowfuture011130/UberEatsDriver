@@ -30,6 +30,7 @@ enum OrderStatus {
   ACCEPTED
   PICKED_UP
   COMPLETED
+  DECLINED_BY_RESTAURANT
 }
 
 type OrderDish @model @auth(rules: [{allow: public}]) {
@@ -86,5 +87,6 @@ type Restaurant @model @auth(rules: [{allow: public}]) {
   lng: Float!
   Dishes: [Dish] @hasMany(indexName: "byRestaurant", fields: ["id"])
   Baskets: [Basket] @hasMany(indexName: "byRestaurant", fields: ["id"])
+  adminSub: String
 }
  

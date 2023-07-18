@@ -13,7 +13,8 @@ export enum OrderStatus {
   READY_FOR_PICKUP = "READY_FOR_PICKUP",
   ACCEPTED = "ACCEPTED",
   PICKED_UP = "PICKED_UP",
-  COMPLETED = "COMPLETED"
+  COMPLETED = "COMPLETED",
+  DECLINED_BY_RESTAURANT = "DECLINED_BY_RESTAURANT"
 }
 
 
@@ -287,6 +288,7 @@ type EagerRestaurant = {
   readonly lng: number;
   readonly Dishes?: (Dish | null)[] | null;
   readonly Baskets?: (Basket | null)[] | null;
+  readonly adminSub?: string | null;
   readonly createdAt?: string | null;
   readonly updatedAt?: string | null;
 }
@@ -308,6 +310,7 @@ type LazyRestaurant = {
   readonly lng: number;
   readonly Dishes: AsyncCollection<Dish>;
   readonly Baskets: AsyncCollection<Basket>;
+  readonly adminSub?: string | null;
   readonly createdAt?: string | null;
   readonly updatedAt?: string | null;
 }

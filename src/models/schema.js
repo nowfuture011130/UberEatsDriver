@@ -848,6 +848,13 @@ export const schema = {
                         ]
                     }
                 },
+                "adminSub": {
+                    "name": "adminSub",
+                    "isArray": false,
+                    "type": "String",
+                    "isRequired": false,
+                    "attributes": []
+                },
                 "createdAt": {
                     "name": "createdAt",
                     "isArray": false,
@@ -907,11 +914,12 @@ export const schema = {
                 "READY_FOR_PICKUP",
                 "ACCEPTED",
                 "PICKED_UP",
-                "COMPLETED"
+                "COMPLETED",
+                "DECLINED_BY_RESTAURANT"
             ]
         }
     },
     "nonModels": {},
     "codegenVersion": "3.4.4",
-    "version": "72e2d33c401fe57b3f8db2af5b5ab969"
+    "version": "66368425b781d62da978ed4bc29f1490"
 };
